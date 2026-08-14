@@ -451,3 +451,77 @@ def search_repairs(search_text):
     connection.close()
 
     return repairs
+
+# ---------------- REPORT FUNCTIONS ----------------
+
+def get_dashboard_stats():
+    connection = get_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    stats = {}
+
+    cursor.execute("SELECT COUNT(*) AS total FROM customers")
+    stats["total_customers"] = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT COUNT(*) AS total FROM devices")
+    stats["total_devices"] = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT COUNT(*) AS total FROM repairs")
+    stats["total_repairs"] = cursor.fetchone()["total"]
+
+    cursor.execute("""
+        SELECT COUNT(*) AS total
+        FROM repairs
+        WHERE repair_status = 'Pending'
+    """)
+    stats["pending_repairs"] = cursor.fetchone()["total"]
+
+    cursor.execute("""
+        SELECT COUNT(*) AS total
+        FROM repairs
+        WHERE repair_status IN ('Completed', 'Delivered')
+    """)
+    stats["completed_repairs"] = cursor.fetchone()["total"]
+
+    cursor.execute("""
+        SELECT COALESCE(SUM(cost), 0) AS total
+        FROM repairs
+    """)
+    stats["total_revenue"] = cursor.fetchone()["total"]
+
+    cursor.close()
+    connection.close()
+
+    return stats
+
+
+def get_recent_repairs(limit=10):
+    connection = get_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    query = """
+        SELECT
+            r.repair_id,
+            c.name AS customer_name,
+            d.brand,
+            d.model,
+            r.repair_status,
+            r.cost,
+            r.date_received
+        FROM repairs r
+        JOIN devices d
+            ON r.device_id = d.device_id
+        JOIN customers c
+            ON d.customer_id = c.customer_id
+        ORDER BY r.repair_id DESC
+        LIMIT %s
+    """
+
+    cursor.execute(query, (limit,))
+
+    repairs = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return repairs
