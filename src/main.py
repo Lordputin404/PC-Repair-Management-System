@@ -1,5 +1,5 @@
 import customtkinter as ctk
-
+from database import get_dashboard_stats
 
 class RepairManagementApp(ctk.CTk):
     def __init__(self):
@@ -98,6 +98,17 @@ class RepairManagementApp(ctk.CTk):
             pady=(0, 25)
         )
 
+        try:
+            stats = get_dashboard_stats()
+        except Exception as error:
+            error_label = ctk.CTkLabel(
+                self.content,
+                text=f"Database Error: {error}",
+                text_color="red"
+            )
+            error_label.pack(anchor="w")
+            return
+
         cards_frame = ctk.CTkFrame(
             self.content,
             fg_color="transparent"
@@ -105,10 +116,10 @@ class RepairManagementApp(ctk.CTk):
         cards_frame.pack(fill="x")
 
         cards = [
-            ("Customers", "0"),
-            ("Devices", "0"),
-            ("Repairs", "0"),
-            ("Completed", "0")
+            ("Customers", stats["total_customers"]),
+            ("Devices", stats["total_devices"]),
+            ("Repairs", stats["total_repairs"]),
+            ("Completed", stats["completed_repairs"])
         ]
 
         for title, value in cards:
@@ -116,6 +127,7 @@ class RepairManagementApp(ctk.CTk):
                 cards_frame,
                 height=120
             )
+
             card.pack(
                 side="left",
                 fill="x",
@@ -125,7 +137,7 @@ class RepairManagementApp(ctk.CTk):
 
             value_label = ctk.CTkLabel(
                 card,
-                text=value,
+                text=str(value),
                 font=ctk.CTkFont(
                     size=32,
                     weight="bold"
@@ -138,6 +150,36 @@ class RepairManagementApp(ctk.CTk):
                 text=title
             )
             title_label.pack()
+
+        # Repair summary
+        summary = ctk.CTkFrame(self.content)
+        summary.pack(
+            fill="x",
+            pady=30,
+            padx=6
+        )
+
+        pending_label = ctk.CTkLabel(
+            summary,
+            text=f"Pending Repairs: {stats['pending_repairs']}",
+            font=ctk.CTkFont(size=18)
+        )
+        pending_label.pack(
+            side="left",
+            padx=30,
+            pady=20
+        )
+
+        revenue_label = ctk.CTkLabel(
+            summary,
+            text=f"Total Repair Cost: ₹{stats['total_revenue']}",
+            font=ctk.CTkFont(size=18)
+        )
+        revenue_label.pack(
+            side="left",
+            padx=30,
+            pady=20
+        )
 
     # ---------------- CUSTOMERS ----------------
 
