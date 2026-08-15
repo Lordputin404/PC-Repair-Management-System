@@ -1,5 +1,10 @@
 import customtkinter as ctk
-from database import get_dashboard_stats
+from tkinter import ttk
+
+from database import (
+    get_dashboard_stats,
+    get_recent_repairs
+)
 
 
 class DashboardPage(ctk.CTkFrame):
@@ -14,8 +19,20 @@ class DashboardPage(ctk.CTkFrame):
         self.load_dashboard()
 
     def create_ui(self):
-        heading = ctk.CTkLabel(
+
+        # ---------- HEADER ----------
+
+        header = ctk.CTkFrame(
             self,
+            fg_color="transparent"
+        )
+        header.pack(
+            fill="x",
+            pady=(0, 20)
+        )
+
+        heading = ctk.CTkLabel(
+            header,
             text="Dashboard",
             font=ctk.CTkFont(
                 size=30,
@@ -23,16 +40,29 @@ class DashboardPage(ctk.CTkFrame):
             )
         )
         heading.pack(
-            anchor="w",
-            pady=(0, 25)
+            side="left"
         )
 
-        self.cards_frame = ctk.CTkFrame(
+        subtitle = ctk.CTkLabel(
+            header,
+            text="PC Repair & Service Center",
+            text_color="gray"
+        )
+        subtitle.pack(
+            side="left",
+            padx=15,
+            pady=8
+        )
+
+        # ---------- STAT CARDS ----------
+
+        cards_frame = ctk.CTkFrame(
             self,
             fg_color="transparent"
         )
-        self.cards_frame.pack(
-            fill="x"
+        cards_frame.pack(
+            fill="x",
+            pady=(0, 20)
         )
 
         self.card_values = {}
@@ -47,93 +77,296 @@ class DashboardPage(ctk.CTkFrame):
         for title, key in cards:
 
             card = ctk.CTkFrame(
-                self.cards_frame,
-                height=120
+                cards_frame,
+                height=125,
+                corner_radius=12
             )
 
             card.pack(
                 side="left",
                 fill="x",
                 expand=True,
-                padx=6
+                padx=5
             )
+
+            card.pack_propagate(False)
 
             value = ctk.CTkLabel(
                 card,
                 text="0",
                 font=ctk.CTkFont(
-                    size=32,
+                    size=30,
                     weight="bold"
                 )
             )
 
             value.pack(
-                pady=(25, 5)
+                anchor="w",
+                padx=20,
+                pady=(22, 2)
             )
 
             label = ctk.CTkLabel(
                 card,
-                text=title
+                text=title,
+                text_color="gray"
             )
 
-            label.pack()
+            label.pack(
+                anchor="w",
+                padx=20
+            )
 
             self.card_values[key] = value
 
-        self.summary = ctk.CTkFrame(
-            self
+        # ---------- LOWER AREA ----------
+
+        lower_frame = ctk.CTkFrame(
+            self,
+            fg_color="transparent"
+        )
+        lower_frame.pack(
+            fill="both",
+            expand=True
         )
 
-        self.summary.pack(
+        # ---------- RECENT REPAIRS ----------
+
+        recent_frame = ctk.CTkFrame(
+            lower_frame,
+            corner_radius=12
+        )
+        recent_frame.pack(
+            side="left",
+            fill="both",
+            expand=True,
+            padx=(0, 8)
+        )
+
+        recent_title = ctk.CTkLabel(
+            recent_frame,
+            text="Recent Repairs",
+            font=ctk.CTkFont(
+                size=20,
+                weight="bold"
+            )
+        )
+
+        recent_title.pack(
+            anchor="w",
+            padx=18,
+            pady=(18, 12)
+        )
+
+        table_container = ctk.CTkFrame(
+            recent_frame,
+            fg_color="transparent"
+        )
+
+        table_container.pack(
+            fill="both",
+            expand=True,
+            padx=12,
+            pady=(0, 12)
+        )
+
+        columns = (
+            "Customer",
+            "Device",
+            "Status",
+            "Cost"
+        )
+
+        self.recent_table = ttk.Treeview(
+            table_container,
+            columns=columns,
+            show="headings"
+        )
+
+        for column in columns:
+            self.recent_table.heading(
+                column,
+                text=column
+            )
+
+        self.recent_table.column(
+            "Customer",
+            width=130
+        )
+
+        self.recent_table.column(
+            "Device",
+            width=150
+        )
+
+        self.recent_table.column(
+            "Status",
+            width=100
+        )
+
+        self.recent_table.column(
+            "Cost",
+            width=80
+        )
+
+        self.recent_table.pack(
+            fill="both",
+            expand=True
+        )
+
+        # ---------- SUMMARY ----------
+
+        summary_frame = ctk.CTkFrame(
+            lower_frame,
+            corner_radius=12
+        )
+
+        summary_frame.pack(
+            side="right",
+            fill="both",
+            expand=False,
+            padx=(8, 0)
+        )
+
+        summary_frame.configure(
+            width=280
+        )
+        summary_frame.pack_propagate(False)
+
+        summary_title = ctk.CTkLabel(
+            summary_frame,
+            text="Repair Summary",
+            font=ctk.CTkFont(
+                size=20,
+                weight="bold"
+            )
+        )
+
+        summary_title.pack(
+            anchor="w",
+            padx=20,
+            pady=(20, 25)
+        )
+
+        self.pending_label = self.create_summary_row(
+            summary_frame,
+            "Pending Repairs"
+        )
+
+        self.completed_label = self.create_summary_row(
+            summary_frame,
+            "Completed"
+        )
+
+        self.revenue_label = self.create_summary_row(
+            summary_frame,
+            "Total Cost"
+        )
+
+    def create_summary_row(self, parent, title):
+
+        frame = ctk.CTkFrame(
+            parent,
+            fg_color="transparent"
+        )
+
+        frame.pack(
             fill="x",
-            pady=30,
-            padx=6
+            padx=20,
+            pady=10
         )
 
-        self.pending_label = ctk.CTkLabel(
-            self.summary,
-            text="Pending Repairs: 0",
-            font=ctk.CTkFont(size=18)
+        label = ctk.CTkLabel(
+            frame,
+            text=title,
+            text_color="gray"
         )
 
-        self.pending_label.pack(
-            side="left",
-            padx=30,
-            pady=20
+        label.pack(
+            side="left"
         )
 
-        self.revenue_label = ctk.CTkLabel(
-            self.summary,
-            text="Total Repair Cost: ₹0",
-            font=ctk.CTkFont(size=18)
+        value = ctk.CTkLabel(
+            frame,
+            text="0",
+            font=ctk.CTkFont(
+                size=18,
+                weight="bold"
+            )
         )
 
-        self.revenue_label.pack(
-            side="left",
-            padx=30,
-            pady=20
+        value.pack(
+            side="right"
         )
+
+        return value
 
     def load_dashboard(self):
 
         try:
+
             stats = get_dashboard_stats()
 
             for key, label in self.card_values.items():
+
                 label.configure(
-                    text=str(stats[key])
+                    text=str(
+                        stats[key]
+                    )
                 )
 
             self.pending_label.configure(
-                text=f"Pending Repairs: {stats['pending_repairs']}"
+                text=str(
+                    stats["pending_repairs"]
+                )
+            )
+
+            self.completed_label.configure(
+                text=str(
+                    stats["completed_repairs"]
+                )
             )
 
             self.revenue_label.configure(
-                text=f"Total Repair Cost: ₹{stats['total_revenue']}"
+                text=f"₹{stats['total_revenue']}"
             )
+
+            self.load_recent_repairs()
 
         except Exception as error:
 
             self.pending_label.configure(
-                text=f"Database Error: {error}"
+                text="Error"
+            )
+
+            print(
+                f"Dashboard error: {error}"
+            )
+
+    def load_recent_repairs(self):
+
+        for item in self.recent_table.get_children():
+
+            self.recent_table.delete(
+                item
+            )
+
+        repairs = get_recent_repairs(8)
+
+        for repair in repairs:
+
+            device = (
+                f"{repair['brand']} "
+                f"{repair['model']}"
+            )
+
+            self.recent_table.insert(
+                "",
+                "end",
+                values=(
+                    repair["customer_name"],
+                    device,
+                    repair["repair_status"],
+                    f"₹{repair['cost']}"
+                )
             )
