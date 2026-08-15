@@ -38,7 +38,10 @@ class RepairManagementApp(ctk.CTk):
             pady=25
         )
 
-        self.show_page(DashboardPage)
+        self.show_page(
+            DashboardPage,
+            "Dashboard"
+        )
 
     def setup_styles(self):
         style = ttk.Style(self)
@@ -99,6 +102,8 @@ class RepairManagementApp(ctk.CTk):
             fill="y"
         )
 
+        # ---------- LOGO / TITLE ----------
+
         title = ctk.CTkLabel(
             self.sidebar,
             text="PC REPAIR\nCENTER",
@@ -109,32 +114,96 @@ class RepairManagementApp(ctk.CTk):
         )
 
         title.pack(
-            pady=(35, 40)
+            pady=(35, 35)
         )
 
-        buttons = [
-            ("Dashboard", DashboardPage),
-            ("Customers", CustomersPage),
-            ("Devices", DevicesPage),
-            ("Repairs", RepairsPage),
-            ("Reports", ReportsPage)
-        ]
+        self.nav_buttons = {}
 
-        for text, page in buttons:
+        # ---------- MAIN ----------
 
-            ctk.CTkButton(
-                self.sidebar,
-                text=text,
-                height=42,
-                corner_radius=8,
-                command=lambda p=page: self.show_page(p)
-            ).pack(
-                padx=20,
-                pady=6,
-                fill="x"
-            )
+        main_label = ctk.CTkLabel(
+            self.sidebar,
+            text="MAIN",
+            font=ctk.CTkFont(
+                size=11,
+                weight="bold"
+            ),
+            anchor="w"
+        )
 
-        # ---------- THEME TOGGLE ----------
+        main_label.pack(
+            fill="x",
+            padx=20,
+            pady=(0, 8)
+        )
+
+        self.add_nav_button(
+            "⌂  Dashboard",
+            DashboardPage,
+            "Dashboard"
+        )
+
+        # ---------- MANAGEMENT ----------
+
+        management_label = ctk.CTkLabel(
+            self.sidebar,
+            text="MANAGEMENT",
+            font=ctk.CTkFont(
+                size=11,
+                weight="bold"
+            ),
+            anchor="w"
+        )
+
+        management_label.pack(
+            fill="x",
+            padx=20,
+            pady=(20, 8)
+        )
+
+        self.add_nav_button(
+            "♟  Customers",
+            CustomersPage,
+            "Customers"
+        )
+
+        self.add_nav_button(
+            "▣  Devices",
+            DevicesPage,
+            "Devices"
+        )
+
+        self.add_nav_button(
+            "⚒  Repairs",
+            RepairsPage,
+            "Repairs"
+        )
+
+        # ---------- REPORTS ----------
+
+        reports_label = ctk.CTkLabel(
+            self.sidebar,
+            text="REPORTS",
+            font=ctk.CTkFont(
+                size=11,
+                weight="bold"
+            ),
+            anchor="w"
+        )
+
+        reports_label.pack(
+            fill="x",
+            padx=20,
+            pady=(20, 8)
+        )
+
+        self.add_nav_button(
+            "▤  Reports",
+            ReportsPage,
+            "Reports"
+        )
+
+        # ---------- THEME ----------
 
         self.theme_combo = ctk.CTkComboBox(
             self.sidebar,
@@ -156,7 +225,28 @@ class RepairManagementApp(ctk.CTk):
             fill="x"
         )
 
-    # ---------- THEME ----------
+    def add_nav_button(self, text, page_class, page_name):
+
+        button = ctk.CTkButton(
+            self.sidebar,
+            text=text,
+            height=42,
+            corner_radius=8,
+            anchor="w",
+            fg_color="transparent",
+            command=lambda: self.show_page(
+                page_class,
+                page_name
+            )
+        )
+
+        button.pack(
+            padx=12,
+            pady=3,
+            fill="x"
+        )
+
+        self.nav_buttons[page_name] = button
 
     def change_theme(self, choice):
 
@@ -174,14 +264,25 @@ class RepairManagementApp(ctk.CTk):
 
     # ---------- PAGE NAVIGATION ----------
 
-    def show_page(self, page_class):
+    def show_page(self, page_class, page_name):
 
         for widget in self.content.winfo_children():
             widget.destroy()
 
-        page = page_class(
-            self.content
-        )
+        for name, button in self.nav_buttons.items():
+
+            if name == page_name:
+                button.configure(
+                    fg_color=("#1f6aa5", "#144870"),
+                    text_color="white"
+                )
+            else:
+                button.configure(
+                    fg_color="transparent",
+                    text_color=("#222222", "#ffffff")
+                )
+
+        page = page_class(self.content)
 
         page.pack(
             fill="both",
