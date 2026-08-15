@@ -1,5 +1,6 @@
 import customtkinter as ctk
 
+from tkinter import ttk
 from ui.dashboard import DashboardPage
 from ui.customers import CustomersPage
 from ui.devices import DevicesPage
@@ -19,6 +20,8 @@ class RepairManagementApp(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
+        self.current_theme = "Dark"
+        self.setup_styles()
         self.create_sidebar()
 
         self.content = ctk.CTkFrame(
@@ -36,6 +39,50 @@ class RepairManagementApp(ctk.CTk):
         )
 
         self.show_page(DashboardPage)
+
+    def setup_styles(self):
+        style = ttk.Style(self)
+        style.theme_use("default")
+
+        if self.current_theme == "Light":
+            background = "#ffffff"
+            foreground = "#222222"
+            heading_background = "#e5e5e5"
+            selected_background = "#3a7ebf"
+
+        else:
+            background = "#1f1f1f"
+            foreground = "#ffffff"
+            heading_background = "#2b2b2b"
+            selected_background = "#1f6aa5"
+
+        style.configure(
+            "Treeview",
+            background=background,
+            foreground=foreground,
+            fieldbackground=background,
+            rowheight=35,
+            borderwidth=0,
+            font=("Segoe UI", 10)
+        )
+
+        style.configure(
+            "Treeview.Heading",
+            background=heading_background,
+            foreground=foreground,
+            relief="flat",
+            font=("Segoe UI", 10, "bold")
+        )
+
+        style.map(
+            "Treeview",
+            background=[
+                ("selected", selected_background)
+            ],
+            foreground=[
+                ("selected", "white")
+            ]
+        )
 
     # ---------- SIDEBAR ----------
 
@@ -86,6 +133,44 @@ class RepairManagementApp(ctk.CTk):
                 pady=6,
                 fill="x"
             )
+
+        # ---------- THEME TOGGLE ----------
+
+        self.theme_combo = ctk.CTkComboBox(
+            self.sidebar,
+            values=[
+                "Dark",
+                "Light",
+                "System"
+            ],
+            state="readonly",
+            command=self.change_theme
+        )
+
+        self.theme_combo.set("Dark")
+
+        self.theme_combo.pack(
+            side="bottom",
+            padx=20,
+            pady=20,
+            fill="x"
+        )
+
+    # ---------- THEME ----------
+
+    def change_theme(self, choice):
+
+        if choice == "Dark":
+            ctk.set_appearance_mode("dark")
+
+        elif choice == "Light":
+            ctk.set_appearance_mode("light")
+
+        else:
+            ctk.set_appearance_mode("system")
+
+        self.current_theme = choice
+        self.setup_styles()
 
     # ---------- PAGE NAVIGATION ----------
 
