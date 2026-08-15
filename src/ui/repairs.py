@@ -489,11 +489,17 @@ class RepairsPage(ctk.CTkFrame):
             )
             return
 
+        if status == "Delivered":
+            date_delivered = str(date.today())
+        else:
+            date_delivered = None
+
         update_repair(
             repair_id,
             status,
             technician,
-            cost
+            cost,
+            date_delivered
         )
 
         messagebox.showinfo(
