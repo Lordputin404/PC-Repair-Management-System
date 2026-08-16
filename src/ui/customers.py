@@ -18,6 +18,10 @@ class CustomersPage(ctk.CTkFrame):
             fg_color="transparent"
         )
 
+        self.name_validation = (
+            self.register(self.validate_name_input)
+        )
+
         self.create_ui()
         self.load_customers()
 
@@ -46,7 +50,12 @@ class CustomersPage(ctk.CTkFrame):
 
         self.name_entry = ctk.CTkEntry(
             form,
-            placeholder_text="Customer Name"
+            placeholder_text="Customer Name",
+            validate="key",
+            validatecommand=(
+                self.name_validation,
+                "%P"
+            )
         )
         self.name_entry.pack(
             side="left",
@@ -58,7 +67,13 @@ class CustomersPage(ctk.CTkFrame):
 
         self.phone_entry = ctk.CTkEntry(
             form,
-            placeholder_text="Phone Number"
+            placeholder_text="Phone Number",
+            width=200
+        )
+
+        self.phone_entry.bind(
+            "<KeyPress>",
+            self.validate_phone_key
         )
         self.phone_entry.pack(
             side="left",
@@ -199,6 +214,38 @@ class CustomersPage(ctk.CTkFrame):
             padx=5
         )
 
+    def validate_name_input(self, value):
+
+        return (
+            value == ""
+            or all(
+                char.isalpha() or char.isspace()
+                for char in value
+            )
+        )
+
+
+    def validate_phone_key(self, event):
+
+        if event.keysym in (
+            "BackSpace",
+            "Delete",
+            "Left",
+            "Right",
+            "Home",
+            "End",
+            "Tab"
+        ):
+            return
+
+        if not event.char.isdigit():
+            return "break"
+
+        current = self.phone_entry.get()
+
+        if len(current) >= 10:
+            return "break"
+
     # ---------- LOAD ----------
 
     def load_customers(self):
@@ -230,6 +277,13 @@ class CustomersPage(ctk.CTkFrame):
             messagebox.showwarning(
                 "Missing Information",
                 "Please enter name and phone number."
+            )
+            return
+
+        if not phone.isdigit() or len(phone) != 10:
+            messagebox.showwarning(
+                "Invalid Phone",
+                "Phone number must contain exactly 10 digits."
             )
             return
 
@@ -344,6 +398,13 @@ class CustomersPage(ctk.CTkFrame):
             messagebox.showwarning(
                 "Missing Information",
                 "Enter name and phone."
+            )
+            return
+
+        if not phone.isdigit() or len(phone) != 10:
+            messagebox.showwarning(
+                "Invalid Phone",
+                "Phone number must contain exactly 10 digits."
             )
             return
 
