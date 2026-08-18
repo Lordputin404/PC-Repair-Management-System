@@ -21,6 +21,14 @@ class DevicesPage(ctk.CTkFrame):
 
         self.customer_map = {}
 
+        self.brand_validation = self.register(
+            self.validate_brand_input
+        )
+
+        self.model_validation = self.register(
+            self.validate_model_input
+        )
+
         self.create_ui()
         self.load_customers()
         self.load_devices()
@@ -63,7 +71,12 @@ class DevicesPage(ctk.CTkFrame):
 
         self.brand_entry = ctk.CTkEntry(
             form,
-            placeholder_text="Brand"
+            placeholder_text="Brand",
+            validate="key",
+            validatecommand=(
+                self.brand_validation,
+                "%P"
+            )
         )
         self.brand_entry.pack(
             side="left",
@@ -75,7 +88,12 @@ class DevicesPage(ctk.CTkFrame):
 
         self.model_entry = ctk.CTkEntry(
             form,
-            placeholder_text="Model"
+            placeholder_text="Model",
+            validate="key",
+            validatecommand=(
+                self.model_validation,
+                "%P"
+            )
         )
         self.model_entry.pack(
             side="left",
@@ -95,8 +113,14 @@ class DevicesPage(ctk.CTkFrame):
 
         self.serial_entry = ctk.CTkEntry(
             form2,
-            placeholder_text="Serial Number"
+            placeholder_text="Serial Number",
         )
+
+        self.serial_entry.bind(
+            "<KeyPress>",
+            self.validate_serial_key
+        )
+        
         self.serial_entry.pack(
             side="left",
             padx=8,
@@ -265,6 +289,53 @@ class DevicesPage(ctk.CTkFrame):
             side="left",
             padx=5
         )
+
+    def validate_brand_input(self, value):
+
+        return (
+            value == ""
+            or all(
+                char.isalpha() or char.isspace()
+                for char in value
+            )
+        )
+
+
+    def validate_model_input(self, value):
+
+        return (
+            value == ""
+            or all(
+                char.isalnum() or char.isspace()
+                for char in value
+            )
+        )
+
+
+    def validate_serial_key(self, event):
+
+        if event.keysym in (
+            "BackSpace",
+            "Delete",
+            "Left",
+            "Right",
+            "Home",
+            "End",
+            "Tab"
+        ):
+            return
+
+        if not (
+            event.char.isalnum()
+            or event.char in "-_"
+        ):
+            return "break"
+        if event.char.isalpha():
+            self.serial_entry.insert(
+                "insert",
+                event.char.upper()
+            )
+            return "break"
 
     # ---------- CUSTOMERS ----------
 
