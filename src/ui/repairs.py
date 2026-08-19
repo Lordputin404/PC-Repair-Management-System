@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from datetime import date
+from datetime import datetime
 
 from database import (
     get_devices,
@@ -21,6 +22,10 @@ class RepairsPage(ctk.CTkFrame):
         )
 
         self.device_map = {}
+
+        self.technician_validation = self.register(
+            self.validate_technician_input
+        )
 
         self.create_ui()
         self.load_devices()
@@ -64,7 +69,12 @@ class RepairsPage(ctk.CTkFrame):
 
         self.technician_entry = ctk.CTkEntry(
             form,
-            placeholder_text="Technician"
+            placeholder_text="Technician",
+            validate="key",
+            validatecommand=(
+                self.technician_validation,
+                "%P"
+            )
         )
         self.technician_entry.pack(
             side="left",
@@ -77,6 +87,11 @@ class RepairsPage(ctk.CTkFrame):
         self.cost_entry = ctk.CTkEntry(
             form,
             placeholder_text="Repair Cost"
+        )
+
+        self.cost_entry.bind(
+            "<KeyPress>",
+            self.validate_cost_key
         )
         self.cost_entry.pack(
             side="left",
@@ -98,6 +113,7 @@ class RepairsPage(ctk.CTkFrame):
             form2,
             placeholder_text="Date Received (YYYY-MM-DD)"
         )
+
         self.date_received_entry.pack(
             side="left",
             padx=8,
@@ -106,6 +122,11 @@ class RepairsPage(ctk.CTkFrame):
             expand=True
         )
 
+        self.date_received_entry.bind(
+            "<KeyPress>",
+            self.validate_date_key
+        )
+        
         self.status_combo = ctk.CTkComboBox(
             form2,
             values=[
@@ -262,6 +283,70 @@ class RepairsPage(ctk.CTkFrame):
             padx=5
         )
 
+    def validate_technician_input(self, value):
+
+        return (
+            value == ""
+            or all(
+                char.isalpha() or char.isspace()
+                for char in value
+            )
+        )
+
+    def validate_cost_key(self, event):
+
+        if event.keysym in (
+            "BackSpace",
+            "Delete",
+            "Left",
+            "Right",
+            "Home",
+            "End",
+            "Tab"
+        ):
+            return
+
+        if not (
+            event.char.isdigit()
+            or event.char == "."
+        ):
+            return "break"
+
+        current = self.cost_entry.get()
+
+        if event.char == "." and "." in current:
+            return "break"
+
+    def validate_date_key(self, event):
+
+        if event.keysym in (
+            "BackSpace",
+            "Delete",
+            "Left",
+            "Right",
+            "Home",
+            "End",
+            "Tab"
+        ):
+            return
+
+        if not event.char.isdigit():
+            return "break"
+
+        current = self.date_received_entry.get()
+
+        # Maximum 8 digits + 2 hyphens
+        if len(current) >= 10:
+            return "break"
+
+        # YYYY-
+        if len(current) == 4:
+            self.date_received_entry.insert("end", "-")
+
+        # YYYY-MM-
+        elif len(current) == 7:
+            self.date_received_entry.insert("end", "-")
+
     # ---------- DEVICES ----------
 
     def load_devices(self):
@@ -351,11 +436,26 @@ class RepairsPage(ctk.CTkFrame):
             .strip()
         )
 
-        date_received = (
-            self.date_received_entry
-            .get()
-            .strip()
-        )
+        date_received = self.date_received_entry.get().strip()
+
+        if not date_received:
+            date_received = str(date.today())
+            self.date_received_entry.insert(
+                0,
+                date_received
+            )
+        else:
+            try:
+                datetime.strptime(
+                    date_received,
+                    "%Y-%m-%d"
+                )
+            except ValueError:
+                messagebox.showwarning(
+                    "Invalid Date",
+                    "Please enter date in YYYY-MM-DD format."
+                )
+                return
 
         if not date_received:
             date_received = str(date.today())
